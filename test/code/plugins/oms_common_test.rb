@@ -290,6 +290,12 @@ module OMS
       assert_equal("{\"DataItems\":[{\"Message\":\"iPhone®\"}]}", parsed_record, "parse json record utf-8 encoding failed");
     end	
     
+    def test_safe_dump_simple_hash_array
+      records = [ { "ID" => 1, "Message" => "iPhone\xAE"} ];
+      json = Common.safe_dump_simple_hash_array(records);
+      assert_equal("[{\"ID\":1,\"Message\":\"iPhone®\"}]", json, "parse json record utf-8 encoding failed: #{json}");
+    end	
+    
     def test_get_current_timezone
       $log = MockLog.new
       File.delete(@tmp_localtime_file.path)

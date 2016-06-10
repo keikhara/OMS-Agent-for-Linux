@@ -713,6 +713,41 @@ module OMS
         return msg
       end
 
+      # dump the records into json string
+      # assume the records is an array of single layer hash
+      # parameters:
+      #   records: hash[]. an array of single layer hash
+      def safe_dump_simple_hash_array(records)
+        msg = nil
+
+        begin
+          msg = JSON.dump(records)
+        rescue => error
+          begin
+            # failed to dump, encode to utf-8, iso-8859-1 and try again
+            # records is an array of hash
+            records.each do | hash |
+              # the value is a hash
+              hash.each do | key, value |
+                # the value should be of simple type
+                # encode the string to utf-8
+                if value.instance_of? String
+                  hash[key] = value.encode('utf-8', 'iso-8859-1')
+                end
+              end
+            end
+
+            msg = JSON.dump(records)
+          rescue => error
+            # at this point we've given up, we don't recognize the encode,
+            # so return nil and log_warning for the record
+            Log.warn_once("Skipping due to failed encoding for #{records}: #{error}")
+          end
+        end
+
+        return msg
+      end # safe_dump_simple_hash_array
+
       # start a request
       # parameters:
       #   req: HTTPRequest. request
